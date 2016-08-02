@@ -12,11 +12,14 @@ LDFLAGS = -m elf_i386 -T src/link.ld
 
 OBJS = obj/kasm.o
 OBJS += obj/kc.o
+OBJS += obj/terminal.o
+OBJS += obj/vga.o
+OBJS += obj/string.o
 
 OUTPUT = okusha/boot/kernel.bin
 
 run:all
-    $(EMULATOR) $(EMULATOR_FLAGS) $(OUTPUT)
+
 
 all:$(OBJS)
 	mkdir okusha/ -p
@@ -28,6 +31,15 @@ obj/kasm.o:src/kernel.asm
 	
 obj/kc.o:src/kernel.c
 	$(COMPILER) $(CFLAGS) $(INC) src/kernel.c -o obj/kc.o 
+	
+obj/terminal.o:src/terminal.c
+	$(COMPILER) $(CFLAGS) $(INC) src/terminal.c -o obj/terminal.o 
+	
+obj/vga.o:src/vga.c
+	$(COMPILER) $(CFLAGS) $(INC) src/vga.c -o obj/vga.o 
+	
+obj/string.o:src/string.c
+	$(COMPILER) $(CFLAGS) $(INC) src/string.c -o obj/string.o 
 	
 build:all
 	#Activate the install xorr if you do not have it already installed
@@ -41,7 +53,7 @@ build:all
 	echo } >> okusha/boot/grub/grub.cfg
 
 	grub-mkrescue -o okusha.iso okusha/
-
+	
 clean:
 	rm -f obj/*.o
 	rm -r -f okusha/

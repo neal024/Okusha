@@ -1,4 +1,8 @@
 
+COMMIT> 7
+==============
+This change contains basic funtionality to put some prints after booting our kernel.
+
 COMMIT> 6
 ==============
 At this point of commit we are pretty much able to boot with our kernel.
