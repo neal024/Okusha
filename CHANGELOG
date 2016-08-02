@@ -1,0 +1,6 @@
+
+COMMIT> 6
+==============
+At this point of commit we are pretty much able to boot with our kernel.
+Running deploy.sh will build and run our kernel with qemu.
+We will only able to see the BIOS message.
