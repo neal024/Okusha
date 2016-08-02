@@ -4,9 +4,14 @@
 ###
 
 RETVAL=0
+DEFLINK=IKNOW
+
 usage()
 {
     echo "Usage: ./deploy.sh {test|run}"
+    echo "Usage: ./deploy.sh {test|run} {iknow|osdev}"
+    echo "1 = " $1
+    echo "2 = " $2
     RETVAL=1
 }
 
@@ -14,7 +19,7 @@ deploy_kernel()
 {
     #Run with Qemu
     make clean
-    make
+    make DEFLINK=$DEFLINK
     qemu-system-i386 -kernel okusha/boot/kernel.bin
 }
 
@@ -22,9 +27,16 @@ deploy_image()
 {
     #Deploy as image
     make clean
-    make build
+    make build DEFLINK=$DEFLINK
     qemu-system-i386 -cdrom okusha.iso
 }
+
+case "$2" in
+    iknow) DEFLINK=IKNOW; ;;
+    osdev) DEFLINK=OSDEV; ;;
+    "")    DEFLINK=IKNOW; ;;
+    *) usage ; RETVAL=2 ; exit $RETVAL;;
+esac
 
 case "$1" in
     test) deploy_kernel; RETVAL=$? ;;

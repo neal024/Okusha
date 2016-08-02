@@ -1,4 +1,12 @@
 
+COMMIT> 8
+==============
+This commit is for build script changes. Mostly for using two different
+bootstrapping assembly and their corrseponding linker script.
+Initially I setup this environment with help of YouTube channel IKnow.
+Right now reading OSDev wiki and taking their basic setup as well.
+This change is to accomodate both of the setup.
+
 COMMIT> 7
 ==============
 This change contains basic funtionality to put some prints after booting our kernel.
