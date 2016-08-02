@@ -10,8 +10,6 @@ usage()
 {
     echo "Usage: ./deploy.sh {test|run}"
     echo "Usage: ./deploy.sh {test|run} {iknow|osdev}"
-    echo "1 = " $1
-    echo "2 = " $2
     RETVAL=1
 }
 
