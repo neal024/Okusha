@@ -1,6 +1,8 @@
 /*
  * OSHUKA: This header includes the necessary bare minimum funtions
  *         to prepare entries (values) which can be put into VGA dispaly table.
+ *		Link: http://wiki.osdev.org/VGA_Hardware
+ * http://www.cs.usfca.edu/~benson/cs326/pintos/pintos/src/devices/vga.c
  */
 #ifndef __VGA_H__
 #define __VGA_H__
@@ -12,7 +14,16 @@
 #define VGA_WIDTH   (80)
 #define VGA_HEIGHT  (25)
 #define VGA_DEPTH   (2)
+#define VGA_ENTRY_COUNT	(2000)
 
+/* VGA Index Registers */
+#define VGA_REG_CTRL	(0x3D4)
+#define VGA_REG_DATA	(0x3D5)
+
+/* VGA Ports */
+#define VGA_PORT_HIGH	(0x0E)
+#define VGA_PORT_LOW	(0x0F)
+ 
 typedef uint16_t vga_entry_t;
 
 /* Hardware text mode color constants. */
@@ -38,7 +49,7 @@ typedef enum vga_color {
 #define VGA_BG_MASK     (4)
 #define VGA_COLOR_MASK  (8)
 
-uint8_t make_color (vga_color_t fg, vga_color_t bg);
-uint16_t make_vgaentry (char c, uint8_t color);
+#define VGA_CLEAR_CHAR	(0x00)	/* NULL */
+//#define VGA_CLEAR_CHAR	(0x32)	/* Blank Space */
 
 #endif /* __VGA_H__ */

@@ -7,5 +7,6 @@
 #include <types.h>
 
 size_t strlen(const char* str);
+void itoa(char *buf, int base, int d);
 
 #endif /* __STRING_H__ */

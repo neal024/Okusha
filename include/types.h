@@ -19,4 +19,8 @@ typedef unsigned long long uint64_t;
 
 typedef unsigned int size_t;
 
+#ifndef NULL
+#define NULL (0x00)
+#endif /* NULL */
+
 #endif /* __TYPES_H__ */

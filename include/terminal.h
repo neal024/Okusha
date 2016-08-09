@@ -7,10 +7,13 @@
 
 #include <vga.h>
 
-void terminal_initialize(void);
-void terminal_setcolor(uint8_t color);
-void terminal_putentryat(char c, uint8_t color, size_t x, size_t y);
-void terminal_putchar(char c);
-void terminal_writestring(const char* data);
+void terminal_init(void);
+void terminal_set_color(uint8_t color);
+void terminal_put_entryat(char c, uint8_t color, size_t x, size_t y);
+void terminal_put_char(char c);
+void terminal_write_string(const char* data);
+void terminal_update_cursor(void);
+void terminal_move_cursor(void);
+void terminal_format_print(const char *format, ...);
 
 #endif /* __TERMINAL_H__ */

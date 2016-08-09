@@ -1,46 +1,53 @@
 
-##
-## Bootstrap and their Corresponding linker definitions were used from various sources like
-## IKnow YouTube channel (Very basic)
-## OSDev: http://wiki.osdev.org (Very Organized)
-##
-## So this DEFLINK is used as command line input
-## make DEFLINK={OSDEV|IKNOW}
-##
-DEFLINK = IKNOW
+#*******************************************************************************
+#
+# OKUSHA makefile
+#
+#*******************************************************************************
 
-ASSEMBLER = nasm
-ASFLAGS = -f elf32
+##
+## ASSEBLER for bootstrap loader
+##
+ASSEMBLER = as
+ASFLAGS = --32
+BOOTSTARP_SRC = src/bootstrap.s
+#ASSEMBLER = nasm
+#ASFLAGS = -f elf32
+#BOOTSTARP_SRC = src/bootstrap.asm
 
+
+##
+## COMPILER for kernel binary
+##
 COMPILER = gcc
 INC = -I include/
 CFLAGS = -m32 -c -ffreestanding
-ifeq ($(DEFLINK), OSDEV)
-    LINKER_CFLAGS = -D__OS_DEV_LINKER__
-else
-    LINKER_CFLAGS = -D__IKNOW_LINKER__
-endif
+#CFLAGS += -w	# Disable all warning
+#CFLAGS += -nostartfiles
+#CFLAGS += -nodefaultlibs
+#CFLAGS += -nostdlib
+#CFLAGS += -fno-builtin
+#CFLAGS += -ffreestanding
+#CFLAGS += -fno-hosted
+#CFLAGS += -fno-exceptions
+#CFLAGS += -fno-leading-underscore
 
+##
+## Linker for linking bootstarp and kernel binary together
+##
 LINKER = ld
 LDFLAGS = -m elf_i386 -T
-ifeq ($(DEFLINK), OSDEV)
-    LDSRC = src/linker.ld
-else
-    LDSRC = src/link.ld
-endif
+LDSRC = src/linker.ld
 
 
-ifeq ($(DEFLINK), OSDEV)
-    OBJS = obj/boots.o
-else
-    OBJS = obj/kasm.o
-endif
-OBJS += obj/kc.o
+OBJS = obj/bootstrap.o
+OBJS += obj/kernel.o
 OBJS += obj/terminal.o
 OBJS += obj/vga.o
 OBJS += obj/string.o
 
 OUTPUT = okusha/boot/kernel.bin
+GRUBCFG = okusha/boot/grub/grub.cfg
 
 run:all
 
@@ -48,16 +55,14 @@ run:all
 all:$(OBJS)
 	mkdir okusha/ -p
 	mkdir okusha/boot/ -p
+	mkdir okusha/boot/grub/ -p
 	$(LINKER) $(LDFLAGS) $(LDSRC) -o $(OUTPUT) $(OBJS)
 
-obj/kasm.o:src/kernel.asm
-	$(ASSEMBLER) $(ASFLAGS) -o obj/kasm.o src/kernel.asm
+obj/bootstrap.o:$(BOOTSTARP_SRC)
+	$(ASSEMBLER) $(ASFLAGS) -o obj/bootstrap.o $(BOOTSTARP_SRC)
 	
-obj/boots.o:src/bootstrap.asm
-	$(ASSEMBLER) $(ASFLAGS) -o obj/boots.o src/bootstrap.asm
-	
-obj/kc.o:src/kernel.c
-	$(COMPILER) $(CFLAGS) $(LINKER_CFLAGS) $(INC) src/kernel.c -o obj/kc.o 
+obj/kernel.o:src/kernel.c
+	$(COMPILER) $(CFLAGS) $(INC) src/kernel.c -o obj/kernel.o 
 	
 obj/terminal.o:src/terminal.c
 	$(COMPILER) $(CFLAGS) $(INC) src/terminal.c -o obj/terminal.o 
@@ -71,13 +76,13 @@ obj/string.o:src/string.c
 build:all
 	#Activate the install xorr if you do not have it already installed
 	rm okush/boot/grub/ -r -f
-	mkdir okusha/boot/grub/ -p
-	echo set default=0 >> okusha/boot/grub/grub.cfg
-	echo set timeout=0 >> okusha/boot/grub/grub.cfg
-	echo menuentry "Okusha" { >> okusha/boot/grub/grub.cfg
-	echo         set root='(hd96)' >> okusha/boot/grub/grub.cfg
-	echo         multiboot /boot/kernel.bin >> okusha/boot/grub/grub.cfg
-	echo } >> okusha/boot/grub/grub.cfg
+	echo "set timeout=0"					>  $(GRUBCFG)
+	echo "set default=0"					>> $(GRUBCFG)
+	echo "menuentry "Okusha" {"				>> $(GRUBCFG)
+	echo "	set root='(hd96)'"				>> $(GRUBCFG)
+	echo "	multiboot /boot/kernel.bin"		>> $(GRUBCFG)
+	echo "	boot"							>> $(GRUBCFG)
+	echo "}"								>> $(GRUBCFG)
 
 	grub-mkrescue -o okusha.iso okusha/
 	

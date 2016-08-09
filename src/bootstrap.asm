@@ -1,7 +1,6 @@
-;;;
-;;; Taken from OSDev: http://wiki.osdev.org/Bare_Bones_with_NASM
-;;;
-
+; ***************************************************************
+;  Taken from OSDev: http://wiki.osdev.org/Bare_Bones_with_NASM
+; ***************************************************************
 
 ; Declare constants for the multiboot header.
 MBALIGN  equ  1<<0              ; align loaded modules on page boundaries
@@ -36,7 +35,7 @@ align 4
 section .bss
 align 4
 stack_bottom:
-resb 16384 ; 16 KiB
+resb 2097152	; 2Mb
 stack_top:
 
 
@@ -45,8 +44,8 @@ stack_top:
 ; doesn't make sense to return from this function as the bootloader is gone.
 ; Declare _start as a function symbol with the given symbol size.
 section .text
-global _start:function (_start.end - _start)
-_start:
+global _start_bootstrap_loader:function (_start_bootstrap_loader.end - _start_bootstrap_loader)
+_start_bootstrap_loader:
     ; The bootloader has loaded us into 32-bit protected mode on a x86
     ; machine. Interrupts are disabled. Paging is disabled. The processor
     ; state is as defined in the multiboot standard. The kernel has full
