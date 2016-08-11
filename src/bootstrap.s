@@ -13,6 +13,8 @@
 /* Code Segment */
 .section .text
 .extern kernel_main
+.extern puts
+.extern printf
 .global _start_bootstrap_loader
 
 _start_bootstrap_loader:
@@ -27,11 +29,25 @@ _start_bootstrap_loader:
 						 * and push to kernel stack */
 	call kernel_main	/* Actual kernel call() */
 
+	/*
+     * We are out of kernel. Give some message.
+     */
+    push %eax			/* Return from kernel stored in AX register
+						 * Push it to stack */
+	push $exit_msg		/* Push Exit Message into stack */
+	call printf			/* Call print function */
+	push $halt_msg		/* Push Halt Message into stack */
+	call puts			/* Call print function */
+
 _stop:
 	cli
 	hlt
 	jmp _stop
 
+exit_msg:
+	.asciz	"\nKernel Returned %u. Bye!\n"
+halt_msg:
+	.asciz  "System Halted..."
 
 /* Stack Segment */
 .section .bss

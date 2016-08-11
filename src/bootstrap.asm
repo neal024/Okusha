@@ -2,17 +2,21 @@
 ;  Taken from OSDev: http://wiki.osdev.org/Bare_Bones_with_NASM
 ; ***************************************************************
 
+; ***************************************************************
 ; Declare constants for the multiboot header.
+; ***************************************************************
 MBALIGN  equ  1<<0              ; align loaded modules on page boundaries
 MEMINFO  equ  1<<1              ; provide memory map
-FLAGS    equ  MBALIGN | MEMINFO ; this is the Multiboot 'flag' field
+
+; Multiboot Header Must Items (32bit)
 MAGIC    equ  0x1BADB002        ; 'magic number' lets bootloader find the header
+FLAGS    equ  MBALIGN | MEMINFO ; this is the Multiboot 'flag' field
 CHECKSUM equ -(MAGIC + FLAGS)   ; checksum of above, to prove we are multiboot
 
 
 ; Declare a multiboot header that marks the program as a kernel. These are magic
 ; values that are documented in the multiboot standard. The bootloader will
-; search for this signature in the first 8 KiB of the kernel file, aligned at a
+; search for this signature in the first 8 KiB (8192bytes) of the kernel file, aligned at a
 ; 32-bit boundary. The signature is in its own section so the header can be
 ; forced to be within the first 8 KiB of the kernel file.
 section .multiboot
@@ -70,6 +74,9 @@ _start_bootstrap_loader:
     ; yet. The GDT should be loaded here. Paging should be enabled here.
     ; C++ features such as global constructors and exceptions will require
     ; runtime support to work as well.
+
+	push eax
+	push ebx
                                                                                          
     ; Enter the high-level kernel. The ABI requires the stack is 16-byte
     ; aligned at the time of the call instruction (which afterwards pushes

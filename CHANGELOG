@@ -1,3 +1,7 @@
+COMMIT> 13
+==============
+kernel return value. System halt message. multiboot header file.
+
 COMMIT> 12
 ==============
 Code cleanup. Printf implementation.
