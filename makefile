@@ -87,6 +87,6 @@ build:all
 	grub-mkrescue -o okusha.iso okusha/
 	
 clean:
-	if [ -e obj ]; then rm -f obj/*.o; fi;
-	if [ -e okusha ]; then rm -r -f okusha/ ; fi;
+	if [ -e obj ]; then rm -f obj/*.o; else mkdir obj; fi;
+	if [ -e okusha ]; then rm -r -f okusha/ ; else mkdir okusha; fi;
 	if [ -e okusha.iso ]; then rm okusha.iso; fi;
