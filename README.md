@@ -1,9 +1,11 @@
 # Okusha
-Operating System Dvelopment
 
-Right now this is just another science project.
-Goal is to simulate few responsibilities of Operating System.
+This Project is for Leraning OS Dvelopment
+> Learning OS from Scratch!
+> ~The Dirty Way!
 
-CHANGELOG: Contains change descriptions
+### Taking Help from -
+ * [algorithman.de](http://www.algorithman.de/) [YouTube](https://www.youtube.com/channel/UCQdZltW7bh1ta-_nCH7LWYw) by [Viktor Engelmann](https://github.com/AlgorithMan-de)
+ * [OsDev](http://wiki.osdev.org/)
+ * [IKnow](https://www.youtube.com/channel/UCofr5KcAmI_CB_tCYpVzZEw)
 
-Please check the HELP file for list of URLs from where I am getting help.
