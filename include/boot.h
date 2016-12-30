@@ -10,7 +10,7 @@
 
 /* Basic port I/O */
 
-static inline void outb(uint16_t __port, uint8_t __value)
+static inline void outb(uint8_t __value, uint16_t __port)
 {
 	__asm__ __volatile__ ("outb %0,%1" : : "a" (__value), "dN" (__port));
 }
@@ -22,7 +22,7 @@ static inline uint8_t inb(uint16_t __port)
 	return __value;
 }
 
-static inline void outw(uint16_t __port, uint16_t __value)
+static inline void outw(uint16_t __value, int16_t __port)
 {
 	__asm__ __volatile__ ("outw %0,%1" : : "a" (__value), "dN" (__port));
 }

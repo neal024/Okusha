@@ -26,11 +26,13 @@ CFLAGS = -m32 -c -ffreestanding
 #CFLAGS += -nostartfiles
 #CFLAGS += -nodefaultlibs
 #CFLAGS += -nostdlib
+#CFLAGS += -fno-use-cxa-atexit
 #CFLAGS += -fno-builtin
-#CFLAGS += -ffreestanding
-#CFLAGS += -fno-hosted
+#CFLAGS += -fno-rtti
 #CFLAGS += -fno-exceptions
 #CFLAGS += -fno-leading-underscore
+#CFLAGS += -ffreestanding
+#CFLAGS += -fno-hosted
 
 ##
 ## Linker for linking bootstarp and kernel binary together
@@ -90,3 +92,6 @@ clean:
 	if [ -e obj ]; then rm -f obj/*.o; else mkdir obj; fi;
 	if [ -e okusha ]; then rm -r -f okusha/ ; else mkdir okusha; fi;
 	if [ -e okusha.iso ]; then rm okusha.iso; fi;
+
+install:
+	sudo cp okusha/boot/kernel.bin /boot/okusha_kernel.bin

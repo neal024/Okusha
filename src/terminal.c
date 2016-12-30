@@ -50,10 +50,10 @@ vga_update_cursor (void)
 	uint32_t pos;
 	pos = (term_cur_row * VGA_WIDTH) + term_cur_column; /* Position: (Row * Width) + Column */
 
-	outb(VGA_REG_CTRL, VGA_PORT_HIGH);		/* CRT Control Register: Select Cursor Location */
-	outb(VGA_REG_DATA, (0x00FF & (pos >> 8)));	/* Send the High Byte accross the BUS */
-	outb(VGA_REG_CTRL, VGA_PORT_LOW);		/* CRT Control Register: Select Send Low Byte */
-	outb(VGA_REG_DATA, (0x00FF & pos));		/* Send the Low Byte of the Cursor Location */
+	outb(VGA_PORT_HIGH, VGA_REG_CTRL);		/* CRT Control Register: Select Cursor Location */
+	outb((0x00FF & (pos >> 8)), VGA_REG_DATA);	/* Send the High Byte accross the BUS */
+	outb(VGA_PORT_LOW, VGA_REG_CTRL);		/* CRT Control Register: Select Send Low Byte */
+	outb((0x00FF & pos), VGA_REG_DATA);		/* Send the Low Byte of the Cursor Location */
 }
 
 static inline void
