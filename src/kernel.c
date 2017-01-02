@@ -5,6 +5,7 @@
  *
  ******************************************************************************/
 
+#include <gdt.h>
 #include <terminal.h>
 #include <multiboot.h>
 
@@ -26,6 +27,9 @@ kernel_main(void *mb_info_addr, uint32_t mb_hdr_magic)
 
 	printf("Multiboot Loader Magic: 0x%x\n", mb_hdr_magic);
 	printf("Multiboot Sector in RAM: (%p)\n", mb_info_addr);
+
+	printf("Initializing GDT...\n");
+	gdt_init();
 
 	return (69);
 }

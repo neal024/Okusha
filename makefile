@@ -43,6 +43,7 @@ LDSRC = src/linker.ld
 
 
 OBJS = obj/bootstrap.o
+OBJS += obj/gdt.o
 OBJS += obj/kernel.o
 OBJS += obj/terminal.o
 OBJS += obj/vga.o
@@ -62,6 +63,9 @@ all:$(OBJS)
 
 obj/bootstrap.o:$(BOOTSTARP_SRC)
 	$(ASSEMBLER) $(ASFLAGS) -o obj/bootstrap.o $(BOOTSTARP_SRC)
+	
+obj/gdt.o:src/gdt.c
+	$(COMPILER) $(CFLAGS) $(INC) src/gdt.c -o obj/gdt.o 
 	
 obj/kernel.o:src/kernel.c
 	$(COMPILER) $(CFLAGS) $(INC) src/kernel.c -o obj/kernel.o 
@@ -87,10 +91,10 @@ build:all
 	echo "}"								>> $(GRUBCFG)
 
 	grub-mkrescue -o okusha.iso okusha/
-	
+
 clean:
 	if [ -e obj ]; then rm -f obj/*.o; else mkdir obj; fi;
-	if [ -e okusha ]; then rm -r -f okusha/ ; else mkdir okusha; fi;
+	if [ -e okusha ]; then rm -r -f okusha/* ; else mkdir okusha; fi;
 	if [ -e okusha.iso ]; then rm okusha.iso; fi;
 
 install:

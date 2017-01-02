@@ -10,27 +10,39 @@
 
 /* Basic port I/O */
 
-static inline void outb(uint8_t __value, uint16_t __port)
+static inline void outb(uint8_t value, uint16_t port)
 {
-	__asm__ __volatile__ ("outb %0,%1" : : "a" (__value), "dN" (__port));
+	asm volatile ("outb %0,%1" : : "a" (value), "dN" (port));
 }
 
-static inline uint8_t inb(uint16_t __port)
+static inline uint8_t inb(uint16_t port)
 {
-	uint8_t __value;
-	__asm__ __volatile__ ("inb %1,%0" : "=a" (__value) : "dN" (__port));
-	return __value;
+	uint8_t value;
+	asm volatile ("inb %1,%0" : "=a" (value) : "dN" (port));
+	return value;
 }
 
-static inline void outw(uint16_t __value, int16_t __port)
+static inline void outw(uint16_t value, uint16_t port)
 {
-	__asm__ __volatile__ ("outw %0,%1" : : "a" (__value), "dN" (__port));
+	asm volatile ("outw %0,%1" : : "a" (value), "dN" (port));
 }
 
-static inline uint16_t inw(uint16_t __port)
+static inline uint16_t inw(uint16_t port)
 {
-	uint16_t __value;
-    __asm__ __volatile__ ("inw %1,%0" : "=a" (__value) : "dN" (__port));
-    return __value;
+	uint16_t value;
+    asm volatile ("inw %1,%0" : "=a" (value) : "dN" (port));
+    return value;
+}
+
+static inline void outl(uint32_t value, uint16_t port)
+{
+    asm volatile("outl %0,%1" : : "a" (value), "dN" (port));
+}
+
+static inline uint32_t inl(uint16_t port)
+{
+    uint32_t value;
+    asm volatile("inl %1,%0" : "=a" (value) : "dN" (port));
+    return value;
 }
 #endif /* __BOOT_H__ */
