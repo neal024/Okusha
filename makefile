@@ -46,8 +46,8 @@ LDSRC = src/linker.ld
 
 OBJS = obj/bootstrap.o
 OBJS += obj/gdt.o
-OBJS += obj/interruptstubs.o
-OBJS += obj/interrupts.o
+#OBJS += obj/interruptstubs.o
+#OBJS += obj/interrupts.o
 OBJS += obj/kernel.o
 OBJS += obj/terminal.o
 OBJS += obj/vga.o

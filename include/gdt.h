@@ -21,35 +21,35 @@
  *		value to 0xFFFFF the segment will span the full 4 GiB address space.
  */
 
-struct desc_struct {
+struct gdt_entry {
 	uint16_t	limit_low;		/* Size of the Segment */
 	uint16_t	base_low;		/* Starting Address of the Segment */
 	uint8_t		base_middle;	/* Starting Address of the Segment */
-	uint8_t		type;			/* Access Type */
-	uint8_t		flags_limit_hi; /* Flags and Limit High Bits */
-	uint8_t		base_hi;		/* Starting Address of the Segment */
+	uint8_t		access;			/* Access Type */
+	uint8_t		granularity;	/* Flags and Limit High Bits */
+	uint8_t		base_high;		/* Starting Address of the Segment */
+} __attribute__((packed));
+
+struct gdt_ptr {
+	uint16_t	limit;
+	uint32_t	base;
 } __attribute__((packed));
 
 enum segment_type {
-	SEG_NULL,
-	SEG_UNSD,
+	SEG_NULL = 0,
 	SEG_CODE,
 	SEG_DATA,
+	SEG_USR1,
+	SEG_USR2,
+	//SEG_TSS,
 	SEG_MAX,
 };
 
-void gdt_entry_init(struct desc_struct entry, uint32_t base, uint32_t limit, uint8_t type);
-
-uint32_t gdt_entry_get_base(struct desc_struct entry);
-uint32_t gdt_entry_get_limit(struct desc_struct entry);
-
-uint16_t offset_of_segment(enum segment_type seg);
-
+void gdt_set_entry(uint8_t seg_num, uint32_t base, uint32_t limit, uint8_t access, uint8_t granularity);
 void gdt_init(void);
-void gdt_remove(void);
 
 #else /* __LINUX_GDT__ */
-struct desc_struct {
+struct gdt_entry {
 	uint32_t	a;
 	uint32_t	b;
 }

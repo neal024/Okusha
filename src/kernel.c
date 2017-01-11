@@ -23,12 +23,12 @@ kernel_main(void *mb_info_addr, uint32_t mb_hdr_magic)
     /* Initialize terminal interface */
     terminal_init();
 
+	/* Welcome Message */
     puts("OKUSHA: Learning OS from scratch!\n");
-
 	printf("Multiboot Loader Magic: 0x%x\n", mb_hdr_magic);
 	printf("Multiboot Sector in RAM: (%p)\n", mb_info_addr);
 
-	printf("Initializing GDT...\n");
+	puts("Initializing GDT: Global Descriptor Table\n");
 	gdt_init();
 
 	/* Kernel-Loop */

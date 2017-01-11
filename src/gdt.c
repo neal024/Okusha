@@ -1,100 +1,47 @@
 #include <gdt.h>
 
-struct desc_struct gdt[SEG_MAX];	/* null, unused, code, data */
+struct gdt_entry gdt[SEG_MAX];	/* null, unused, code, data */
+struct gdt_ptr gdt_p;
 
 #ifndef __LINUX_GDT__
-void gdt_entry_init(struct desc_struct entry, uint32_t base, uint32_t limit, uint8_t flags)
+/*
+ * Setup a Descriptor in Global Descriptor Table
+ */
+void gdt_set_entry(uint8_t seg_num, uint32_t base, uint32_t limit, uint8_t access, uint8_t granularity)
 {
-	uint8_t *dst = (uint8_t *)&entry;
 
-	/*
-	entry.limit_low			= ;
-	entry.base_low			= ;
-	entry.base_middle		= ;
-	entry.type				= ;
-	entry.flags_limit_hi	= ;
-	entry.base_hi			= ;
-	 */
+	/* Setup the descriptor base access */
+	gdt[seg_num].base_low = (base & 0xFFFF);
+	gdt[seg_num].base_middle = (base >> 16) & 0xFF;
+	gdt[seg_num].base_high = (base >> 24) & 0xFF;
 
-	/* Encode Limit */
-	if (limit <= 65536) {
-		dst[6] = 0x40;	/* 16bit Entry */
-	}
-	else {
-		if ((limit & 0xFFF) != 0xFFF) {
-			limit = (limit >> 12) - 1;
-		}
-		else {
-			limit = (limit >> 12);
-		}
-		dst[6] = 0xC0; 	/* Not in 16bit Mode */
-	}
+	/* Setup the descriptor limits */
+	gdt[seg_num].limit_low = (limit & 0xFFFF);
+	gdt[seg_num].granularity = ((limit >> 16) & 0x0F);
 
-	dst[0]  =  (limit & 0x000000FF);
-	dst[1]  = ((limit & 0x0000FF00) >> 8);
-	dst[6] |= ((limit & 0x000F0000) >> 16);
-
-	/* Encode Base */
-	dst[2] =  (base & 0x000000FF);
-	dst[3] = ((base & 0x0000FF00) >> 8);
-	dst[4] = ((base & 0x00FF0000) >> 16);
-	dst[7] = ((base & 0xFF000000) >> 24);
-
-	/* Access Right */
-	dst[5] = flags;
+	/* Finally, set up the granularity and access flags */
+	gdt[seg_num].granularity |= (granularity & 0xF0);
+	gdt[seg_num].access = access;
 }
 
-uint32_t gdt_entry_get_base(struct desc_struct entry)
-{
-	uint8_t *dst = (uint8_t *)&entry;
-	uint32_t ret = 0;
-
-	ret = dst[7];
-	ret = (ret << 8) + dst[4];
-	ret = (ret << 8) + dst[3];
-	ret = (ret << 8) + dst[2];
-
-	return ret;
-}
-
-uint32_t gdt_entry_get_limit(struct desc_struct entry)
-{
-	uint8_t *dst = (uint8_t *)&entry;
-	uint32_t ret = 0;
-
-	ret = dst[6] & 0x0F;
-	ret = (ret << 8) + dst[1];
-	ret = (ret << 8) + dst[0];
-
-	if ((dst[6] & 0xC0) == 0xC0) {
-		ret = (ret << 12) | 0xFFF;
-	}
-
-	return ret;
-}
-
-uint16_t offset_of_segment(enum segment_type seg)
-{
-	return (uint16_t)((uint32_t)&gdt[seg] - (uint32_t)&gdt[0]);
-}
-
+/*
+ * Initialize The Global Descriptor Table
+ */
 void gdt_init(void)
 {
-	gdt_entry_init(gdt[SEG_NULL], 0, 0, 0);
-	gdt_entry_init(gdt[SEG_UNSD], 0, 0, 0);
-	gdt_entry_init(gdt[SEG_CODE], 0, 64*1024*1024, 0x9A);	/* Start at 0 (Zero) of Size 64MB, Flags 0x9a */
-	gdt_entry_init(gdt[SEG_DATA], 0, 64*1024*1024, 0x92);	/* Start at 0 (Zero) of Size 64MB, Flags 0x92 */
+	
+	gdt_set_entry(SEG_NULL, 0, 0, 0, 0);					/* NULL descriptor */
+	gdt_set_entry(SEG_CODE, 0, 64*1024*1024, 0x9A, 0xCF);	/* Kernel Code Segment */
+	gdt_set_entry(SEG_DATA, 0, 64*1024*1024, 0x92, 0xCF);	/* Kernel Data Segment */
+	gdt_set_entry(SEG_USR1, 0, 64*1024*1024, 0xFA, 0xCF);	/* User-Mode Segment 1 */
+	gdt_set_entry(SEG_USR2, 0, 64*1024*1024, 0xF2, 0xCF);	/* User-Mode Segment 2 */
+	//gdt_set_entry(SEG_TSS, 0, 0, 0, 0);
 
-	uint32_t i[2];
-	i[1] = (uint32_t) &gdt;
-	i[0] = sizeof(gdt) << 16;
+	/* Setup the GDT pointer and limit */
+	gdt_p.limit = (sizeof(struct gdt_entry) * SEG_MAX) - 1;
+	gdt_p.base = (uint32_t)&gdt;
 
-	asm volatile ("lgdt (%0)": :"p" (((uint8_t *) i)+2));
+	asm volatile ("lgdt (%0)": :"m" (gdt_p));
 }
-
-void gdt_remove(void)
-{
-}
-
 #else /* __LINUX_GDT__ */
 #endif /* __LINUX_GDT__ */
