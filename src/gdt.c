@@ -75,7 +75,7 @@ uint32_t gdt_entry_get_limit(struct desc_struct entry)
 
 uint16_t offset_of_segment(enum segment_type seg)
 {
-	return (uint8_t*)&gdt[seg] - (uint8_t)&gdt;
+	return (uint16_t)((uint32_t)&gdt[seg] - (uint32_t)&gdt[0]);
 }
 
 void gdt_init(void)
@@ -86,10 +86,10 @@ void gdt_init(void)
 	gdt_entry_init(gdt[SEG_DATA], 0, 64*1024*1024, 0x92);	/* Start at 0 (Zero) of Size 64MB, Flags 0x92 */
 
 	uint32_t i[2];
-	i[0] = (uint32_t) &gdt;
-	i[1] = sizeof(gdt) << 16;
+	i[1] = (uint32_t) &gdt;
+	i[0] = sizeof(gdt) << 16;
 
-	__asm__ __volatile__ ("lgdt (%0)": :"p" (((uint8_t *)i)+2));
+	asm volatile ("lgdt (%0)": :"p" (((uint8_t *) i)+2));
 }
 
 void gdt_remove(void)

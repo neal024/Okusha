@@ -31,5 +31,8 @@ kernel_main(void *mb_info_addr, uint32_t mb_hdr_magic)
 	printf("Initializing GDT...\n");
 	gdt_init();
 
+	/* Kernel-Loop */
+	while(1);
+
 	return (69);
 }

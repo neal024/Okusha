@@ -21,18 +21,20 @@ BOOTSTARP_SRC = src/bootstrap.s
 ##
 COMPILER = gcc
 INC = -I include/
-CFLAGS = -m32 -c -ffreestanding
+CFLAGS = -m32 -c
 #CFLAGS += -w	# Disable all warning
-#CFLAGS += -nostartfiles
-#CFLAGS += -nodefaultlibs
-#CFLAGS += -nostdlib
-#CFLAGS += -fno-use-cxa-atexit
-#CFLAGS += -fno-builtin
-#CFLAGS += -fno-rtti
+CFLAGS += -ffreestanding
+CFLAGS += -fno-builtin
 #CFLAGS += -fno-exceptions
-#CFLAGS += -fno-leading-underscore
-#CFLAGS += -ffreestanding
 #CFLAGS += -fno-hosted
+#CFLAGS += -fno-leading-underscore
+#CFLAGS += -fno-rtti
+CFLAGS += -fno-stack-protector
+#CFLAGS += -fno-use-cxa-atexit  #for C++
+CFLAGS += -nodefaultlibs
+CFLAGS += -nostartfiles
+CFLAGS += -nostdinc
+CFLAGS += -nostdlib
 
 ##
 ## Linker for linking bootstarp and kernel binary together
@@ -44,6 +46,8 @@ LDSRC = src/linker.ld
 
 OBJS = obj/bootstrap.o
 OBJS += obj/gdt.o
+OBJS += obj/interruptstubs.o
+OBJS += obj/interrupts.o
 OBJS += obj/kernel.o
 OBJS += obj/terminal.o
 OBJS += obj/vga.o
@@ -51,8 +55,6 @@ OBJS += obj/string.o
 
 OUTPUT = okusha/boot/kernel.bin
 GRUBCFG = okusha/boot/grub/grub.cfg
-
-run:all
 
 
 all:$(OBJS)
@@ -67,6 +69,12 @@ obj/bootstrap.o:$(BOOTSTARP_SRC)
 obj/gdt.o:src/gdt.c
 	$(COMPILER) $(CFLAGS) $(INC) src/gdt.c -o obj/gdt.o 
 	
+obj/interruptstubs.o:src/interruptstubs.s
+	$(ASSEMBLER) $(ASFLAGS) -o obj/interruptstubs.o src/interruptstubs.s
+	
+obj/interrupts.o:src/interrupts.c
+	$(COMPILER) $(CFLAGS) $(INC) src/interrupts.c -o obj/interrupts.o 
+	
 obj/kernel.o:src/kernel.c
 	$(COMPILER) $(CFLAGS) $(INC) src/kernel.c -o obj/kernel.o 
 	
@@ -78,6 +86,7 @@ obj/vga.o:src/vga.c
 	
 obj/string.o:src/string.c
 	$(COMPILER) $(CFLAGS) $(INC) src/string.c -o obj/string.o 
+
 	
 build:all
 	#Activate the install xorr if you do not have it already installed
@@ -91,6 +100,12 @@ build:all
 	echo "}"								>> $(GRUBCFG)
 
 	grub-mkrescue -o okusha.iso okusha/
+
+
+run:build
+	(killall VirtualBox && sleep 1) || true
+	VirtualBox --startvm 'Okusha' ./okusha.iso
+
 
 clean:
 	if [ -e obj ]; then rm -f obj/*.o; else mkdir obj; fi;

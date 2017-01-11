@@ -16,4 +16,6 @@ void terminal_update_cursor(void);
 void terminal_move_cursor(void);
 void terminal_format_print(const char *format, ...);
 
+void puts (const char* data);
+void printf(const char *format, ...);
 #endif /* __TERMINAL_H__ */

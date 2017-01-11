@@ -18,6 +18,7 @@
 .global _start_bootstrap_loader
 
 _start_bootstrap_loader:
+
 	mov $kernel_stack, %esp /* set kernel stack to stack pointer register */
 	/*
 	 * here you need to call the initializer function
