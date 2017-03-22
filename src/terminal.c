@@ -4,29 +4,33 @@
 #include <string.h>
 #include <boot.h>
 #include <ascii.h>
+#include <util.h>
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
  * VGA ENVIRONMENT VARIABLES
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-static size_t	 term_cur_row;
-static size_t 	 term_cur_column;
-static uint8_t	 term_cur_color;
-static uint8_t	 term_cur_tabspace;
-static size_t    term_cur_buf_pos;
-static uint16_t* term_buffer;
+static uint16_t* term_buffer;       /* VGA Buffer Pointer */
+/* Co-Ordinates */
+static size_t	 term_cur_row;      /* Current Row */
+static size_t 	 term_cur_column;   /* Current Column */
+static size_t    term_cur_buf_pos;  /* Current Position in VGA Buffer */
+/* Attributes */
+static uint8_t	 term_cur_color;    /* Current Foreground & Background
+                                     * Color Combination */
+static uint8_t	 term_cur_htspace;  /* Horizontal TAB Space */
+static uint8_t   term_cur_vtspace;  /* Vertical TAB Space */
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
  * STATIC INLINE DEFINITIONS
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-static inline void
-vga_scroll_up (uint8_t line);
-
+/* Return Combined Foreground & Background Color */
 static inline uint8_t
 vga_get_color (vga_color_t fg, vga_color_t bg)
 {
     return (fg | (bg << VGA_BG_MASK));
 }
 
+/* Return Combined Color & Character */
 static inline uint16_t
 vga_get_entry (char c, uint8_t color)
 {
@@ -35,30 +39,33 @@ vga_get_entry (char c, uint8_t color)
     return ((c16 & 0x00FF) | (color16 << VGA_COLOR_MASK));
 }
 
-static inline void
-vga_overflow_check(void)
-{
-	if (term_cur_row >= VGA_HEIGHT)
-	{
-		vga_scroll_up(1);
-	}
-}
-
+/* Set Cursor Position */
 static inline void
 vga_update_cursor (void)
 {
-	uint32_t pos;
-	pos = (term_cur_row * VGA_WIDTH) + term_cur_column; /* Position: (Row * Width) + Column */
-
-	outb(VGA_PORT_HIGH, VGA_REG_CTRL);		/* CRT Control Register: Select Cursor Location */
+	uint32_t pos = term_cur_buf_pos;
+	outb(VGA_PORT_HIGH, VGA_REG_CTRL);		    /* CRT Control Register: Select Cursor Location */
 	outb((0x00FF & (pos >> 8)), VGA_REG_DATA);	/* Send the High Byte accross the BUS */
-	outb(VGA_PORT_LOW, VGA_REG_CTRL);		/* CRT Control Register: Select Send Low Byte */
-	outb((0x00FF & pos), VGA_REG_DATA);		/* Send the Low Byte of the Cursor Location */
+	outb(VGA_PORT_LOW, VGA_REG_CTRL);		    /* CRT Control Register: Select Send Low Byte */
+    outb((0x00FF & pos), VGA_REG_DATA);		    /* Send the Low Byte of the Cursor Location */
 }
 
+/* 0 (Zero) Based Line Index
+ * Won't update cursor position
+ */
 static inline void
 vga_clear_line(uint8_t from, uint8_t to)
 {
+    if (from > to) {
+        swap(from, to);
+    }
+    if (to > VGA_HEIGHT) {
+        to = VGA_HEIGHT;
+    }
+    if (from > VGA_HEIGHT) {
+        from = 0;
+    }
+
 	size_t start = (VGA_WIDTH * from);
 	size_t stop  = (VGA_WIDTH * to);
 
@@ -68,163 +75,142 @@ vga_clear_line(uint8_t from, uint8_t to)
 										   term_cur_color);
 		++(start);
 	} while (start < stop);
-	vga_update_cursor();
 }
 
+/* Clear The VGA Buffer */
+static inline void
+vga_clear_screen(void)
+{
+	vga_clear_line(0, VGA_HEIGHT);
+
+	term_cur_row     = 0;
+	term_cur_column  = 0;
+    term_cur_buf_pos = 0;
+
+    vga_update_cursor();
+}
+
+/* Scroll Up */
 static inline void
 vga_scroll_up (uint8_t line)
 {
-	/*TODO: Check for line !> VGA_HEIGHT */
+    if (line > VGA_HEIGHT)
+    {
+        line = VGA_HEIGHT;
+    }
 
 	size_t index = 0;
 	size_t copy_len = (VGA_WIDTH * (VGA_HEIGHT-line));
 	size_t cleared  = (VGA_WIDTH * line);
 
-	/* Clear Lines */
-	vga_clear_line(0, (line - 1));
-
-	/* Copy Buffer */
+	/* OVERWRITE: Copy Buffer */
 	for (index = 0; index < copy_len; ++index)
 	{
 		term_buffer[index] = term_buffer[index+cleared];
 	}
 
 	/* Clear Lines */
-	vga_clear_line((VGA_HEIGHT - line -1), (VGA_HEIGHT - 1));
+	vga_clear_line((VGA_HEIGHT - line), VGA_HEIGHT);
 
-	term_cur_row -= line;
+    /* Update Counters */
+    term_cur_buf_pos -= cleared;
+
+    /* Update Cursor */
 	vga_update_cursor();
 }
 
-#if 0
+/* Check Buffer Overflow and Adjust */
 static inline void
-vga_move_line_up(uint8_t)
+vga_overflow_check(void)
 {
-}
-#endif /* 0 */
-
-static inline void
-vga_put_char_at (char c, uint8_t color, size_t row, size_t column)
-{
-	const size_t index = (row * VGA_WIDTH) + column;
-	term_buffer[index] = vga_get_entry(c, color);
-}
-
-static inline void
-vga_put_char_colored()
-{
+	if (term_cur_buf_pos >= VGA_ENTRY_COUNT)
+	{
+		vga_scroll_up(1);
+	}
+    else
+    {
+        /* Update Cursor */
+        vga_update_cursor();
+    }
 }
 
-static inline void
-vga_put_char_colored_at()
-{
-}
-
+/*
+ * Write Character on Buffer
+ * Adjust Screen
+ *      Only Top-Down Adjustment
+ *      No Left-Right Adjustment
+ */
 static inline void
 vga_put_char (char c)
 {
 	uint8_t scrolled = 0;
 
+    /* Write Character in Current Buffer Position */
 	term_buffer[term_cur_buf_pos] = vga_get_entry(c, term_cur_color);
 
-	/* Update Column and Row */
-	if (++(term_cur_column) == VGA_WIDTH)
-	{
-		term_cur_column = 0;
-		if (++(term_cur_row) == VGA_HEIGHT)
-		{
-			vga_overflow_check();
-			vga_scroll_up(1);
-			scrolled += 1;
-		}
-	}
-
-	/* Update current buffer position */
-	if (++(term_cur_buf_pos) == VGA_ENTRY_COUNT)
-	{
-		if (scrolled)
-		{
-			term_cur_buf_pos -= scrolled * VGA_WIDTH;
-		}
-		else
-		{
-			/* Over Flow */
-			term_cur_buf_pos = 0;
-		}
-	}
+	/* Update Column, Row & Position Counter */
+    ++(term_cur_buf_pos);
+    vga_overflow_check();
+    term_cur_row    = term_cur_buf_pos / VGA_WIDTH;
+    term_cur_column = term_cur_buf_pos % VGA_WIDTH;
 }
  
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*
  * PUBLIC APIs
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-void terminal_clear(void)
-{
-	vga_clear_line(0, (VGA_HEIGHT-1));
-	term_cur_row    = 0;
-	term_cur_column = 0;
-	term_buffer     = (uint16_t*) VGA_DISPLAY_MEM;
-}
-
 void terminal_init (void)
 {
 	term_cur_color		= vga_get_color(COLOR_LIGHT_GREY, COLOR_BLACK);
-	term_cur_tabspace	= 8;
-	term_cur_row		= 0;
-	term_cur_column		= 0;
+	term_cur_htspace	= 8;
+	term_cur_vtspace	= 6;
+
 	term_buffer     	= (uint16_t*) VGA_DISPLAY_MEM;
-	terminal_clear();
-}
 
-void terminal_set_color (uint8_t color)
-{
-	term_cur_color = color;
-	/*TODO: Update All Colors */
-}
-
-void terminal_set_tabspace (uint8_t tabspace)
-{
-	term_cur_tabspace = tabspace;
+	vga_clear_screen();
 }
 
 void putch (char c)
 {
 	switch(c)
 	{
-		case BS:
-			if (term_cur_column > 0) {
-				--(term_cur_column);
+		case BS: /* Back Space */
+			if (term_cur_buf_pos > 0) {
+				--(term_cur_buf_pos);
 				vga_put_char(NUL);
 			}
 			break;
 
-		case TAB:
-			term_cur_column = (term_cur_tabspace + term_cur_column) & \
-							 ~(term_cur_tabspace - 1);
+		case HT: /* Horizontal TAB */
+            term_cur_buf_pos += term_cur_htspace;
+	        vga_overflow_check();
+            term_cur_row    = term_cur_buf_pos / VGA_WIDTH;
+            term_cur_column = term_cur_buf_pos % VGA_WIDTH;
 			break;
 
-		case LF:
-			term_cur_buf_pos += (VGA_WIDTH-term_cur_column);
-			term_cur_column = 0;
-			++(term_cur_row);
-			/* TODO: Adjust if out of order*/
+		case LF: /* New Line */
+			term_cur_buf_pos += (VGA_WIDTH - term_cur_column);
+	        vga_overflow_check();
+            term_cur_row    = term_cur_buf_pos / VGA_WIDTH;
+            term_cur_column = term_cur_buf_pos % VGA_WIDTH;
 			break;
 
-		case CR:
+        case VT: /* Vertical TAB */
+            /* NOT IMPLEMENTATED */
+            break;
+
+        case CR: /* Carriage Return: means to return to the beginning
+                  * of the current line without advancing downward.
+                  */
 			term_cur_buf_pos -= term_cur_column;
-			term_cur_column = 0;
+	        vga_overflow_check();
+            term_cur_row    = term_cur_buf_pos / VGA_WIDTH;
+            term_cur_column = term_cur_buf_pos % VGA_WIDTH;
 			break;
 
 		default:
 			vga_put_char(c);
 			break;
 	}
-	vga_update_cursor();
-	vga_overflow_check();
-}
-
-void putch_at (char c, uint8_t row, uint8_t column)
-{
-	vga_put_char_at(c, term_cur_color, row, column);
 }
 
 void puts (const char* data)

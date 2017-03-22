@@ -45,4 +45,5 @@ static inline uint32_t inl(uint16_t port)
     asm volatile("inl %1, %0" : "=a" (value) : "dN" (port));
     return value;
 }
+
 #endif /* __BOOT_H__ */

@@ -8,12 +8,21 @@
 ##
 ## ASSEBLER for bootstrap loader
 ##
-ASSEMBLER = as
-ASFLAGS = --32
-BOOTSTARP_SRC = src/bootstrap.s
-#ASSEMBLER = nasm
-#ASFLAGS = -f elf32
-#BOOTSTARP_SRC = src/bootstrap.asm
+#ASSEMBLER = as
+#ASFLAGS = --32
+#BOOTSTARP_SRC = src/bootstrap.s
+
+ASSEMBLER = nasm
+ASFLAGS = -f elf32
+BOOTSTARP_SRC = src/bootstrap.asm
+
+##
+## Linker for linking bootstarp and kernel binary together
+##
+LINKER = ld
+LDFLAGS = -m elf_i386 -T
+#LDSRC = src/linker_gas.ld
+LDSRC = src/linker_nasm.ld
 
 
 ##
@@ -21,8 +30,11 @@ BOOTSTARP_SRC = src/bootstrap.s
 ##
 COMPILER = gcc
 INC = -I include/
-CFLAGS = -m32 -c
-#CFLAGS += -w	# Disable all warning
+CFLAGS  = -m32 -c
+#CFLAGS += -Wall -O
+#CFLAGS += -fstrength-reduce
+#CFLAGS += -fomit-frame-pointer
+#CFLAGS += -finline-functions
 CFLAGS += -ffreestanding
 CFLAGS += -fno-builtin
 #CFLAGS += -fno-exceptions
@@ -36,58 +48,58 @@ CFLAGS += -nostartfiles
 CFLAGS += -nostdinc
 CFLAGS += -nostdlib
 
-##
-## Linker for linking bootstarp and kernel binary together
-##
-LINKER = ld
-LDFLAGS = -m elf_i386 -T
-LDSRC = src/linker.ld
 
-
-OBJS = obj/bootstrap.o
-OBJS += obj/gdt.o
-#OBJS += obj/interruptstubs.o
-#OBJS += obj/interrupts.o
-OBJS += obj/kernel.o
-OBJS += obj/terminal.o
-OBJS += obj/vga.o
+OBJS  = obj/bootstrap.o
 OBJS += obj/string.o
+OBJS += obj/terminal.o
+OBJS += obj/gdt.o
+OBJS += obj/idt.o
+OBJS += obj/irq.o
+OBJS += obj/isrs.o
+OBJS += obj/kb.o
+OBJS += obj/timer.o
+OBJS += obj/kernel.o
 
-OUTPUT = okusha/boot/kernel.bin
+OUTPUT  = okusha/boot/kernel.bin
 GRUBCFG = okusha/boot/grub/grub.cfg
-
 
 all:$(OBJS)
 	mkdir okusha/ -p
 	mkdir okusha/boot/ -p
 	mkdir okusha/boot/grub/ -p
 	$(LINKER) $(LDFLAGS) $(LDSRC) -o $(OUTPUT) $(OBJS)
+	rm -rf obj/*
 
 obj/bootstrap.o:$(BOOTSTARP_SRC)
 	$(ASSEMBLER) $(ASFLAGS) -o obj/bootstrap.o $(BOOTSTARP_SRC)
-	
-obj/gdt.o:src/gdt.c
-	$(COMPILER) $(CFLAGS) $(INC) src/gdt.c -o obj/gdt.o 
-	
-obj/interruptstubs.o:src/interruptstubs.s
-	$(ASSEMBLER) $(ASFLAGS) -o obj/interruptstubs.o src/interruptstubs.s
-	
-obj/interrupts.o:src/interrupts.c
-	$(COMPILER) $(CFLAGS) $(INC) src/interrupts.c -o obj/interrupts.o 
-	
-obj/kernel.o:src/kernel.c
-	$(COMPILER) $(CFLAGS) $(INC) src/kernel.c -o obj/kernel.o 
-	
-obj/terminal.o:src/terminal.c
-	$(COMPILER) $(CFLAGS) $(INC) src/terminal.c -o obj/terminal.o 
-	
-obj/vga.o:src/vga.c
-	$(COMPILER) $(CFLAGS) $(INC) src/vga.c -o obj/vga.o 
-	
-obj/string.o:src/string.c
-	$(COMPILER) $(CFLAGS) $(INC) src/string.c -o obj/string.o 
 
-	
+obj/string.o:src/string.c
+	$(COMPILER) $(CFLAGS) $(INC) src/string.c -o obj/string.o
+
+obj/terminal.o:src/terminal.c
+	$(COMPILER) $(CFLAGS) $(INC) src/terminal.c -o obj/terminal.o
+
+obj/gdt.o:src/gdt.c
+	$(COMPILER) $(CFLAGS) $(INC) src/gdt.c -o obj/gdt.o
+
+obj/idt.o:src/idt.c
+	$(COMPILER) $(CFLAGS) $(INC) src/idt.c -o obj/idt.o
+
+obj/irq.o:src/irq.c
+	$(COMPILER) $(CFLAGS) $(INC) src/irq.c -o obj/irq.o
+
+obj/isrs.o:src/isrs.c
+	$(COMPILER) $(CFLAGS) $(INC) src/isrs.c -o obj/isrs.o
+
+obj/kb.o:src/kb.c
+	$(COMPILER) $(CFLAGS) $(INC) src/kb.c -o obj/kb.o
+
+obj/timer.o:src/timer.c
+	$(COMPILER) $(CFLAGS) $(INC) src/timer.c -o obj/timer.o
+
+obj/kernel.o:src/kernel.c
+	$(COMPILER) $(CFLAGS) $(INC) src/kernel.c -o obj/kernel.o
+
 build:all
 	#Activate the install xorr if you do not have it already installed
 	rm okush/boot/grub/ -r -f

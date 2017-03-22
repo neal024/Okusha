@@ -1,6 +1,30 @@
 
 #include <string.h>
 
+void *memcpy(void *dest, const void *src, size_t count)
+{
+    const char *sp = (const char *)src;
+    char *dp = (char *)dest;
+    for(; count != 0; count--) *dp++ = *sp++;
+    return dest;
+}
+
+//void *memset(void *dest, char val, size_t count)
+void *memset(void *dest, uint8_t val, size_t count)
+{
+    char *temp = (char *)dest;
+    for( ; count != 0; count--) *temp++ = val;
+    return dest;
+}
+
+//unsigned short *memsetw(unsigned short *dest, unsigned short val, size_t count)
+uint16_t *memsetw(uint16_t *dest, uint16_t val, size_t count)
+{
+    uint16_t *temp = (uint16_t *)dest;
+    for( ; count != 0; count--) *temp++ = val;
+    return dest;
+}
+
 size_t strlen(const char* str)
 {
     size_t len = 0;
